@@ -2,7 +2,8 @@ To run
 ------
 
 1. ```sudo npm install -g typescript``` (if you havn't already)
-1. ```npm install JPV``` (needed for validation)
+1. ```sudo npm install -g JPV``` (needed for validation)
 1. ```git clone https://git01.codeplex.com/typescript```
-1. ```tsc --out runnable.js typescript/src/compiler/parser.ts convert.ts```
-1. ```node runnable.js```
+1. ```tsc --out ifacejson.js typescript/src/compiler/parser.ts convert.ts```
+1. ```tsc example.ts```
+1. ```node example.js```
