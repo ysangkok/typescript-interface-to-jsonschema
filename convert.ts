@@ -1,6 +1,11 @@
 ///<reference path='typescript.ts' />
 ///<reference path='node.d.ts' />
 
+module TSIFaceJSONSchema {
+
+var sys = require("sys");
+var assert = require("assert");
+
 class StringSourceText implements TypeScript.ISourceText {
        private str: string;
        constructor(src) {
@@ -41,8 +46,11 @@ class JSONSchema {
 	};
 }
 
-function getJSONSchemas(typeScriptSrc) {
+export function extractSchemas(typeScriptSrc) { // argument is string or node.js module object
 	var src = typeScriptSrc;
+	if (typeof src.filename !== "undefined") {
+		src = require("fs").readFileSync(src.filename.split(".")[0] + ".ts", "utf-8");
+	}
 	
 	var jsonschemas = [];
 	
@@ -75,35 +83,17 @@ function getJSONSchemas(typeScriptSrc) {
 	return jsonschemas.map(function(v){return v.toObject();});
 }
 
-// demo code
+export function typeCheck(JSVenv, args, schemas, ifaces) {
+	var i = 0;
+	ifaces.forEach(function(v) {
+		if (!v) { i++; return; }
+		var candidate_schemas = schemas.filter(function(w){ return w.description === v; });
+		if (candidate_schemas.length === 0) throw new Error("unknown interface " + v);
+		var schema = candidate_schemas[0];
+		var res = JSVenv.validate(args[i], schema);
+		assert.ok(res.errors.length === 0, "Runtime typecheck failed on argument number " + (i+1) + ": Value: " + sys.inspect(args[i]) + ", Schema: " + JSON.stringify(schema) + ", Error reports (length " + res.errors.length + "): " + sys.inspect(res.errors));
+		i++;
+	});
+}
 
-var src = "interface duck { color: string; weight: number; age?: number; }\ninterface car { numberDoors: number; }";
-var jsonSchemaObjects = getJSONSchemas(src);
-
-console.log(jsonSchemaObjects.map(function(v){return JSON.stringify(v);}));
-
-// VALIDATE SCHEMAS
-
-var JSVenv = require("JSV").JSV.createEnvironment();
-
-var obj1 = '{"color": "brown", "weight": 3.2, "age": 6.4}'; // this is a valid duck
-var obj2 = '{"color": "brown", "weight": 3.2, "age": "four"}';
-var obj3 = '{"numberDoors": "four"}';
-var obj4 = '{"numberDoors": 3}'; // this is a valid car
-
-[jsonSchemaObjects[0],jsonSchemaObjects[1]].forEach(function testSchema(schema) {
-	console.log(
-		[obj1, obj2, obj3, obj4].map(function objIsValid(obj) {
-			var report = JSVenv.validate(JSON.parse(obj), schema);
-	
-			if (report.errors.length === 0) {
-				return true; // valid
-			} else {
-				return false; // invalid
-			}
-		})
-	);
-});
-// outputs:
-//	[true, false, false, false]
-//	[false, false, false, true]
+}
