@@ -8,5 +8,7 @@ To run
 1. ```tsc example.ts```
 1. ```node example.js```
 
+**Superseded by:** https://github.com/lbovet/typson
+
 A similar converter from TypeScript to JSON Schema, implemented in Java instead of JS,
 can be found on https://github.com/vorburger/eclipse-typescript-xtext + https://github.com/lbovet/wtype.
